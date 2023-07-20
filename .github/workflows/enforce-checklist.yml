@@ -33,3 +33,43 @@ jobs:
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Check Status
+        if: steps.checklist.outputs.invalidItems == 'true'
+        run: |
+          # Set the status check to failed
+          echo "Checklist validation failed. Please complete all checklist items before merging the pull request."
+          echo "::set-output name=status::failure"
+        continue-on-error: true
+
+  finalize:
+    needs: enforce-checklist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finalize Check Status
+        if: needs.enforce-checklist.outputs.status != 'failure'
+        run: |
+          # Set the status check to successful if the checklist is completed
+          echo "::set-output name=status::success"
+        continue-on-error: true
+
+      - name: Update Check Status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const output = '${{ needs.enforce-checklist.outputs.status }}';
+            const context = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              name: 'Checklist',
+              status: output === 'success' ? 'completed' : 'completed',
+              conclusion: output,
+              output: {
+                title: 'Checklist Validation',
+                summary: output === 'success' ? 'All checklist items are checked.' : 'Please complete all checklist items before merging the pull request.',
+              },
+            };
+            github.checks.create(context);
+          token: ${{ secrets.GITHUB_TOKEN }}
