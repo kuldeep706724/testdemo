@@ -57,19 +57,9 @@ jobs:
         if: always()
         uses: actions/github-script@v6
         with:
-          script: |
-            const output = '${{ needs.enforce-checklist.outputs.status }}';
-            const context = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.payload.pull_request.head.sha,
-              name: 'Checklist',
-              status: output === 'success' ? 'completed' : 'completed',
-              conclusion: output,
-              output: {
-                title: 'Checklist Validation',
-                summary: output === 'success' ? 'All checklist items are checked.' : 'Please complete all checklist items before merging the pull request.',
-              },
-            };
-            github.checks.create(context);
-          token: ${{ secrets.GITHUB_TOKEN }}
+          check_name: 'Checklist'
+          status: ${{ needs.enforce-checklist.outputs.status }}
+          conclusion: ${{ needs.enforce-checklist.outputs.status }}
+          output: ${{ needs.enforce-checklist.outputs.status == 'success' && '{"title":"Checklist Validation","summary":"All checklist items are checked."}' || '{"title":"Checklist Validation","summary":"Please complete all checklist items before merging the pull request."}' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
