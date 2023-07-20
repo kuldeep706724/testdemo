@@ -3,7 +3,7 @@ name: Enforce Checklist
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [synchronize]
 
 jobs:
   enforce-checklist:
@@ -19,12 +19,12 @@ jobs:
           # Read the PR description
           pr_description=$(jq -r .pull_request.body $GITHUB_EVENT_PATH)
           
-          # Check if all required items are present in the PR description
+          # Check if all required items are checked in the PR description
           invalid_items=false
           for item in "${required_items[@]}"; do
-            if [[ ! "$pr_description" == *"$item"* ]]; then
+            if [[ ! "$pr_description" =~ "- [x] $item" ]]; then
               invalid_items=true
-              echo "Missing checklist item: $item"
+              echo "Unchecked checklist item: $item"
             fi
           done
           
