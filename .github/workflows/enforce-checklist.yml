@@ -14,7 +14,7 @@ jobs:
         id: checklist
         run: |
           # Define the required checklist items
-          required_items=("Are your changes following SOLID principles?" "Are there any erroneous console logs, debuggers or leftover code in your changes?" "Walk away, take a break, re-read what you filled out above does it make sense if you were coming in cold? What extra context could you provide?")
+          required_items=("Are your changes following SOLID principles?" "Are there any erroneous console logs, debuggers or leftover code in your changes?" "Walk away, take a break, re-read what you filled out above does it make sense if you were coming in cold? What extra content could you provide?")
           
           # Read the PR description
           pr_description=$(jq -r .pull_request.body $GITHUB_EVENT_PATH)
