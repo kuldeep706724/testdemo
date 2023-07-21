@@ -53,7 +53,7 @@ jobs:
         run: |
           echo "::set-output name=status::success"
       - name: Auto-Merge Pull Request
-        if: always() && needs.enforce-checklist.outputs.status == 'success'
+        if: always() && needs.enforce-checklist.outputs.status == 'success' && needs.enforce-checklist.outputs.INVALID_ITEMS != 'true'
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
