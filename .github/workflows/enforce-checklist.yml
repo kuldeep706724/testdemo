@@ -30,22 +30,20 @@ jobs:
           
           # Output the result
           echo "::set-output name=invalidItems::$invalid_items"
+          if [[ "$invalid_items" == "true" ]]; then
+            echo "Checklist validation failed. Please complete all checklist items before merging the pull request."
+            exit 1
+          fi
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set Check Status
-        if: steps.checklist.outputs.invalidItems == 'true'
-        run: |
-          echo "Checklist validation failed. Please complete all checklist items before merging the pull request."
-          echo "::set-output name=status::failure"
 
   finalize:
     needs: enforce-checklist
     runs-on: ubuntu-latest
     steps:
       - name: Finalize Check Status
-        if: needs.enforce-checklist.outputs.invalidItems != 'true'
+        if: always()
         run: |
           echo "::set-output name=status::success"
       - name: Auto-Merge Pull Request
