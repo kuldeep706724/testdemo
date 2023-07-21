@@ -2,8 +2,10 @@
 name: Enforce Checklist and Auto-Merge
 
 on:
-  pull_request_target:
-    types: [opened, synchronize]
+  pull_request:
+    types:
+      - opened
+      - synchronize
 
 jobs:
   enforce-checklist:
@@ -17,7 +19,8 @@ jobs:
           required_items=("Are your changes following SOLID principles?" "Are there any erroneous console logs, debuggers or leftover code in your changes?" "Walk away, take a break, re-read what you filled out above does it make sense if you were coming in cold? What extra context could you provide?")
           
           # Read the PR description
-          pr_description=$(jq -r .pull_request.body $GITHUB_EVENT_PATH)
+          pr_number=$(jq -r .pull_request.number $GITHUB_EVENT_PATH)
+          pr_description=$(curl -s -H "Authorization: Bearer $GITHUB_TOKEN" "https://api.github.com/repos/${{ github.repository }}/pulls/$pr_number" | jq -r .body)
           
           # Check if all required items are checked in the PR description
           invalid_items=false
@@ -28,8 +31,8 @@ jobs:
             fi
           done
           
-          # Output the result
-          echo "::set-output name=invalidItems::$invalid_items"
+          # Output the result to an environment file
+          echo "INVALID_ITEMS=$invalid_items" >> $GITHUB_ENV
           if [[ "$invalid_items" == "true" ]]; then
             echo "Checklist validation failed. Please complete all checklist items before merging the pull request."
             exit 1
