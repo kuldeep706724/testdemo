@@ -1,5 +1,5 @@
 # .github/workflows/enforce-checklist.yml
-name: Enforce Checklist
+name: Enforce Checklist and Auto-Merge
 
 on:
   pull_request_target:
@@ -48,7 +48,25 @@ jobs:
         if: needs.enforce-checklist.outputs.invalidItems != 'true'
         run: |
           echo "::set-output name=status::success"
-      - name: Update Check Status
-        if: always()
-        run: |
-          gh pr merge "${{ github.event.pull_request.number }}" --auto
+      - name: Auto-Merge Pull Request
+        if: always() && needs.enforce-checklist.outputs.status == 'success'
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pr } = await github.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            if (pr.mergeable === true) {
+              await github.pulls.merge({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+              });
+              console.log("Pull request merged successfully.");
+            } else {
+              console.log("Pull request cannot be merged automatically. Please resolve conflicts manually.");
+            }
